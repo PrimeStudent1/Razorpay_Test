@@ -1,0 +1,39 @@
+{
+  "name": "razorpay-test-app",
+  "version": "1.0.0",
+  "description": "Razorpay Test Payment Gateway + Vite Demo Website",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install",
+    "import-credentials": "node scripts/importCredentials.js",
+    "generate-excel": "node scripts/generateExcel.js",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "lint": "npm --prefix backend run lint && npm --prefix frontend run lint",
+    "build": "npm --prefix frontend run build",
+    "security-check": "node scripts/securityScan.js",
+    "verify": "npm run lint && npm test && npm run build && npm run security-check",
+    "start": "node backend/server.js"
+  },
+  "keywords": [
+    "razorpay",
+    "payment-gateway",
+    "vite",
+    "react",
+    "express",
+    "nodejs",
+    "test-mode",
+    "ci-cd",
+    "docker"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

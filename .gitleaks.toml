@@ -1,0 +1,25 @@
+title = "Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowed mock credentials and example templates"
+paths = [
+  '''^\.env\.example$''',
+  '''^backend/\.env\.example$''',
+  '''^frontend/\.env\.example$''',
+  '''^config/credentials\.example\.xlsx$''',
+  '''^README\.md$''',
+  '''backend/tests/.*''',
+  '''frontend/src/tests/.*'''
+]
+regexes = [
+  '''rzp_test_[a-zA-Z0-9_*]{8,}''',
+  '''your_secret_key_here''',
+  '''your_key_id_here''',
+  '''placeholder_secret_key''',
+  '''placeholder_key''',
+  '''test-mock-secret''',
+  '''test-dummy'''
+]

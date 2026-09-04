@@ -1,0 +1,82 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+# Permissions: read repository contents
+permissions:
+  contents: read
+
+jobs:
+  validate-and-test:
+    name: Lint, Test & Build (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: 📦 Install Root Dependencies
+        run: npm ci
+
+      - name: 📦 Install Backend Dependencies
+        run: npm --prefix backend ci
+
+      - name: 📦 Install Frontend Dependencies
+        run: npm --prefix frontend ci
+
+      - name: 🔍 Lint Backend Code
+        run: npm --prefix backend run lint
+
+      - name: 🔍 Lint Frontend Code
+        run: npm --prefix frontend run lint
+
+      - name: 🧪 Run Backend Automated Tests (Mocked Razorpay SDK)
+        run: npm --prefix backend test
+        env:
+          NODE_ENV: test
+          RAZORPAY_KEY_ID: rzp_test_mockKeyId
+          RAZORPAY_KEY_SECRET: test-mock-secret
+          RAZORPAY_MODE: test
+
+      - name: 🧪 Run Frontend Automated Component Tests
+        run: npm --prefix frontend test
+
+      - name: 🏗️ Build Production Frontend (Vite)
+        run: npm --prefix frontend run build
+
+      - name: 🛡️ Backend Route & Syntax Validation
+        run: |
+          node -e "
+            process.env.NODE_ENV = 'test';
+            process.env.RAZORPAY_KEY_ID = 'rzp_test_dummy';
+            process.env.RAZORPAY_KEY_SECRET = 'test-dummy';
+            const app = require('./backend/server');
+            if (!app) throw new Error('Failed to load server app');
+            console.log('✓ Backend server syntax & routes validated successfully');
+          "
+
+      - name: 📤 Upload Production Frontend Artifact
+        if: matrix.node-version == 20
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
