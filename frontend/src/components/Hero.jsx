@@ -172,6 +172,8 @@ export default function Hero({ onExploreRooms, onOpenBooking }) {
                 alt={activeSlide.title}
                 className="preview-slide-img"
                 loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
               <span className="preview-category-badge">{activeSlide.badge}</span>
             </div>

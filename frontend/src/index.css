@@ -5826,4 +5826,33 @@ img {
   }
 }
 
+/* ========================================================
+   LAZY ROUTE SUSPENSE LOADER & FAST RENDERING OPTIMIZATIONS
+   ======================================================== */
+
+.lazy-route-loader {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: radial-gradient(circle at 50% 10%, #172554 0%, #0a0f1d 60%, #030712 100%);
+  color: #cbd5e1;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Viewport Paint Optimization for Below-the-Fold Sections */
+.features-section,
+.comparison-section,
+.gallery-section,
+.trust-section,
+.contact-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 750px;
+}
+
+
 

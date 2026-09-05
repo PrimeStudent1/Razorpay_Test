@@ -180,6 +180,7 @@ export default function GallerySection() {
                   alt={item.title}
                   className="gallery-img"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div className="gallery-hover-overlay">
                   <span className="gallery-zoom-icon">🔍 Tap to Zoom</span>
@@ -243,6 +244,7 @@ export default function GallerySection() {
                 src={filteredItems[lightboxIndex].image}
                 alt={filteredItems[lightboxIndex].title}
                 className="lightbox-full-img"
+                decoding="async"
               />
             </div>
 

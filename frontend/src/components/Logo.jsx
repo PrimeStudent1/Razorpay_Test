@@ -28,6 +28,7 @@ export default function Logo({ size = 'medium', showBadge = false, onClick }) {
         src="/tejus-logo.png"
         alt="TEJUS BOYS PG - Premium Student Living Dehradun"
         className="tejus-official-logo"
+        decoding="async"
         style={{
           height: `${imgHeight}px`,
           width: 'auto',

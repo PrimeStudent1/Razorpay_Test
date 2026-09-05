@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import ProductShowcase, { ROOMS_DATA } from './components/ProductShowcase';
@@ -9,17 +9,31 @@ import TrustSection from './components/TrustSection';
 import ContactSection from './components/ContactSection';
 import MobileStickyBar from './components/MobileStickyBar';
 import Footer from './components/Footer';
-import CheckoutModal from './components/CheckoutModal';
-import OrderSuccessModal from './components/OrderSuccessModal';
 import WhatsAppButton from './components/WhatsAppButton';
-import PaymentPage from './components/PaymentPage';
-import RoomAllotmentPage from './components/room-allotment/RoomAllotmentPage';
 import {
   getGatewayConfig,
   createProductOrder,
   verifyPaymentSignature,
 } from './services/paymentApi';
 import { TEJUS_LOGO_DATA_URL } from './services/logoDataUrl';
+
+// Lazy-loaded routes & heavy components for instant initial page rendering
+const PaymentPage = lazy(() => import('./components/PaymentPage'));
+const RoomAllotmentPage = lazy(() => import('./components/room-allotment/RoomAllotmentPage'));
+const CheckoutModal = lazy(() => import('./components/CheckoutModal'));
+const OrderSuccessModal = lazy(() => import('./components/OrderSuccessModal'));
+
+/**
+ * Sleek luxury loading fallback for lazy-loaded routes
+ */
+function RouteLoadingFallback({ message = 'Loading Tejus Boys PG...' }) {
+  return (
+    <div className="lazy-route-loader">
+      <div className="spinner-glow"></div>
+      <p>{message}</p>
+    </div>
+  );
+}
 
 /**
  * Dynamically loads Razorpay checkout.js script
@@ -47,7 +61,11 @@ export default function App() {
     new URLSearchParams(window.location.search).get('tab') === 'allotment';
 
   if (isAllotmentRoute) {
-    return <RoomAllotmentPage />;
+    return (
+      <Suspense fallback={<RouteLoadingFallback message="Loading Room Allotment Portal..." />}>
+        <RoomAllotmentPage />
+      </Suspense>
+    );
   }
 
   // 2. Dedicated route check for Next Tab checkout portal
@@ -57,7 +75,11 @@ export default function App() {
     (new URLSearchParams(window.location.search).has('orderId') && !new URLSearchParams(window.location.search).has('payment_status'));
 
   if (isCheckoutRoute) {
-    return <PaymentPage />;
+    return (
+      <Suspense fallback={<RouteLoadingFallback message="Connecting to Secure Checkout..." />}>
+        <PaymentPage />
+      </Suspense>
+    );
   }
 
   // Room & Booking State
@@ -348,31 +370,39 @@ export default function App() {
       />
 
       {/* Room Reservation Checkout Modal */}
-      <CheckoutModal
-        isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
-        selectedRoom={selectedRoom}
-        setSelectedRoom={setSelectedRoom}
-        bookingPlan={bookingPlan}
-        setBookingPlan={setBookingPlan}
-        customer={customer}
-        setCustomer={setCustomer}
-        moveInDetails={moveInDetails}
-        setMoveInDetails={setMoveInDetails}
-        onProceedToPayment={handleProceedToPayment}
-        isProcessing={isProcessing}
-        errorMessage={errorMessage}
-      />
+      {isBookingModalOpen && (
+        <Suspense fallback={null}>
+          <CheckoutModal
+            isOpen={isBookingModalOpen}
+            onClose={() => setIsBookingModalOpen(false)}
+            selectedRoom={selectedRoom}
+            setSelectedRoom={setSelectedRoom}
+            bookingPlan={bookingPlan}
+            setBookingPlan={setBookingPlan}
+            customer={customer}
+            setCustomer={setCustomer}
+            moveInDetails={moveInDetails}
+            setMoveInDetails={setMoveInDetails}
+            onProceedToPayment={handleProceedToPayment}
+            isProcessing={isProcessing}
+            errorMessage={errorMessage}
+          />
+        </Suspense>
+      )}
 
       {/* Official Booking Confirmation Pass Modal */}
-      <OrderSuccessModal
-        result={paymentResult}
-        onClose={() => setPaymentResult(null)}
-        onRetry={() => {
-          setPaymentResult(null);
-          setIsBookingModalOpen(true);
-        }}
-      />
+      {paymentResult && (
+        <Suspense fallback={null}>
+          <OrderSuccessModal
+            result={paymentResult}
+            onClose={() => setPaymentResult(null)}
+            onRetry={() => {
+              setPaymentResult(null);
+              setIsBookingModalOpen(true);
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

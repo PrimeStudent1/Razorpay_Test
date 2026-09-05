@@ -97,6 +97,7 @@ export default function ProductShowcase({ onSelectRoomForBooking }) {
                   alt={`Tejus Boys PG - ${room.title}`}
                   className="room-card-photo"
                   loading="lazy"
+                  decoding="async"
                 />
                 <span className="room-type-badge">{room.badge}</span>
                 <span className="room-token-chip">Token: ₹{room.token.toLocaleString('en-IN')}</span>
