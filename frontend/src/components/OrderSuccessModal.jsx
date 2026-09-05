@@ -32,7 +32,7 @@ export default function OrderSuccessModal({
             </h3>
 
             <p style={{ color: '#57534e', fontSize: '0.9rem', marginTop: -4 }}>
-              Your room reservation at <strong>Tejas PG (Dehradun)</strong> is confirmed.
+              Your room reservation at <strong>Tejus Boys PG (Dehradun)</strong> is confirmed.
             </p>
 
             {/* Official Pass Voucher */}

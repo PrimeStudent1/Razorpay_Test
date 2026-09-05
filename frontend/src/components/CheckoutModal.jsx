@@ -18,6 +18,7 @@ export default function CheckoutModal({
   errorMessage,
 }) {
   const [validationErrors, setValidationErrors] = useState({});
+  const [openInNewTab, setOpenInNewTab] = useState(true);
 
   if (!isOpen || !selectedRoom) return null;
 
@@ -43,7 +44,26 @@ export default function CheckoutModal({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate() && !isProcessing) {
-      onProceedToPayment();
+      let targetTab = null;
+      if (openInNewTab && typeof window !== 'undefined' && typeof window.open === 'function') {
+        try {
+          targetTab = window.open('about:blank', '_blank');
+          if (targetTab && targetTab.document) {
+            targetTab.document.title = 'Connecting to Secure Gateway...';
+            targetTab.document.body.innerHTML = `
+              <div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#090d16;color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+                <div style="width:44px;height:44px;border:3px solid rgba(255,255,255,0.15);border-top-color:#38bdf8;border-radius:50%;animation:spin 1s linear infinite;"></div>
+                <h3 style="margin-top:20px;font-size:18px;font-weight:600;">Connecting to Tejus PG Secure Gateway...</h3>
+                <p style="color:#94a3b8;font-size:13px;margin-top:6px;">Opening payment page in this tab. Please wait a moment.</p>
+                <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+              </div>
+            `;
+          }
+        } catch (tabErr) {
+          // jsdom or blocked environment
+        }
+      }
+      onProceedToPayment(openInNewTab, targetTab);
     }
   };
 
@@ -208,6 +228,28 @@ export default function CheckoutModal({
                 />
               </div>
             </div>
+          </div>
+
+          {/* Step 3: Gateway Window Preference */}
+          <div className="payment-tab-option-card">
+            <label className="checkbox-container">
+              <input
+                type="checkbox"
+                id="open-new-tab-checkbox"
+                checked={openInNewTab}
+                onChange={(e) => setOpenInNewTab(e.target.checked)}
+                disabled={isProcessing}
+              />
+              <span className="checkbox-custom"></span>
+              <div className="tab-option-text">
+                <span className="tab-option-title">
+                  🌐 Open Payment in Next Tab (Recommended)
+                </span>
+                <span className="tab-option-desc">
+                  Opens a dedicated, secure Razorpay checkout page in a new browser tab
+                </span>
+              </div>
+            </label>
           </div>
 
           {/* Pricing Summary */}

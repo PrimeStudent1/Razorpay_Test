@@ -5,96 +5,108 @@ export default function FeaturesSection() {
     {
       id: 1,
       icon: '🍽️',
+      category: 'Nutrition',
       title: '4 Home-Cooked Meals Daily',
-      desc: 'Hygienic, fresh, and nutritious meals (Breakfast, Lunch, Evening Snacks & Dinner).',
+      desc: 'Hygienic, fresh, and nutritious meals: Breakfast, Lunch, Evening Tea with Snacks & Dinner prepared daily.',
     },
     {
       id: 2,
       icon: '📶',
+      category: 'Connectivity',
       title: '300 Mbps Unlimited Wi-Fi',
-      desc: 'Dedicated high-speed fiber internet across all floors for online lectures & streaming.',
+      desc: 'Dedicated enterprise-grade high-speed fiber across all floors for seamless online lectures & research.',
     },
     {
       id: 3,
       icon: '🛡️',
-      title: '24×7 Security & Warden',
-      desc: 'Monitored entry, biometric check-ins, and round-the-clock CCTV surveillance.',
+      category: 'Safety',
+      title: '24×7 Security & Resident Warden',
+      desc: 'Smart biometric access control, 32+ CCTV cameras across corridors, and round-the-clock warden support.',
     },
     {
       id: 4,
       icon: '🚿',
+      category: 'Hygiene',
       title: 'Attached Washrooms & Geyser',
-      desc: 'Clean private bathrooms equipped with 24/7 hot water geyser.',
+      desc: 'Clean private bathrooms equipped with 24/7 hot water geysers and modern western sanitary fixtures.',
     },
     {
       id: 5,
       icon: '🔋',
-      title: '100% Power Backup',
-      desc: 'Automatic heavy-duty inverter/generator backup so studies never pause.',
+      category: 'Power',
+      title: '100% Automatic Power Backup',
+      desc: 'Heavy-duty commercial inverter & generator backup ensuring lights, fans, Wi-Fi and study never pause.',
     },
     {
       id: 6,
       icon: '🧺',
+      category: 'Convenience',
       title: 'Regular Laundry Service',
-      desc: 'Clothes washed & handled with care so you can focus on studies.',
+      desc: 'Hassle-free laundry facility so students can direct their full energy towards academics.',
     },
     {
       id: 7,
       icon: '✨',
+      category: 'Hygiene',
       title: 'Daily Room Housekeeping',
-      desc: 'Rooms, corridors, and washrooms cleaned daily by dedicated staff.',
+      desc: 'Rooms, corridors, and washrooms thoroughly cleaned and sanitized daily by full-time staff.',
       highlighted: true,
     },
     {
       id: 8,
       icon: '💧',
-      title: '24/7 Purified RO Water',
-      desc: 'Commercial Grade RO + UV water purifiers on every floor.',
+      category: 'Health',
+      title: '24/7 Purified RO Drinking Water',
+      desc: 'Multi-stage commercial RO + UV water purifiers with cold and regular water dispensing on every floor.',
     },
     {
       id: 9,
       icon: '📖',
-      title: 'Quiet Study Atmosphere',
-      desc: 'Disciplined environment with quiet hours so you can concentrate without distractions.',
+      category: 'Academic',
+      title: 'Disciplined Study Environment',
+      desc: 'Quiet study atmosphere with strictly enforced silent hours (11:00 PM – 6:00 AM) for deep concentration.',
     },
     {
       id: 10,
       icon: '📍',
+      category: 'Campus',
       title: 'Prime Campus Proximity',
-      desc: "Walking distance to Graphic Era Hospital & Tula's Institute so you save travel time.",
+      desc: "Walking distance to Graphic Era Hospital (2 mins) & Tula's University (3 mins), saving hours of daily travel.",
     },
     {
       id: 11,
       icon: '🛵',
-      title: 'Vehicle Parking',
-      desc: 'Spacious & secure covered parking for two-wheelers and bicycles.',
+      category: 'Vehicle',
+      title: 'Secure Vehicle Parking',
+      desc: 'Spacious, well-lit covered parking area monitored by CCTV for two-wheelers and bicycles.',
     },
     {
       id: 12,
       icon: '🪑',
-      title: 'Furnished Study Desk & Bed',
-      desc: 'Ergonomic study chairs, wooden desks, and comfortable orthopedic mattresses.',
+      category: 'Comfort',
+      title: 'Furnished Ergonomic Study Setup',
+      desc: 'Solid wooden study desk, comfortable chair, individual steel wardrobe/locker, and orthopedic mattress.',
     },
   ];
 
   return (
     <section className="amenities-section" id="amenities">
       <div className="container">
-        {/* Section Header matching Screenshot 2 */}
-        <div className="section-header">
-          <div className="section-eyebrow-pill">
+        {/* Section Header */}
+        <div className="section-header-block text-center">
+          <div className="section-eyebrow-pill center-pill">
             <span className="dot-gold"></span>
-            <span>WHY CHOOSE TEJAS PG</span>
+            <span>PREMIUM STUDENT AMENITIES</span>
           </div>
 
           <h2 className="section-title-large">
-            Designed for Student Success. <br />
+            Designed for Academic Focus. <br className="hide-mobile" />
             Trusted by Parents Across India.
           </h2>
 
           <p className="section-subtitle">
-            We provide a safe, peaceful, and hygienic living environment where students can focus on their
-            education while feeling at home.
+            Every facility at <strong>TEJUS BOYS PG</strong> is tailored to provide a safe, healthy, and supportive
+            student lifestyle in Dehradun.
           </p>
         </div>
 
@@ -105,8 +117,11 @@ export default function FeaturesSection() {
               key={item.id}
               className={`amenity-box-card ${item.highlighted ? 'highlighted' : ''}`}
             >
-              <div className={`amenity-icon-circle ${item.highlighted ? 'highlighted' : ''}`}>
-                <span>{item.icon}</span>
+              <div className="amenity-top-row">
+                <div className="amenity-icon-circle">
+                  <span>{item.icon}</span>
+                </div>
+                <span className="amenity-category-badge">{item.category}</span>
               </div>
               <h3 className="amenity-box-title">{item.title}</h3>
               <p className="amenity-box-desc">{item.desc}</p>

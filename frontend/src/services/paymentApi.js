@@ -70,3 +70,29 @@ export async function verifyPaymentSignature({
   }
   return data;
 }
+
+export async function createPaymentLink({
+  productId,
+  quantity = 1,
+  customer = {},
+  callbackUrl,
+  notes = {},
+}) {
+  const res = await fetch('/api/payment/create-payment-link', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      productId,
+      quantity,
+      customer,
+      callbackUrl,
+      notes,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Failed to generate payment link');
+  }
+  return data;
+}

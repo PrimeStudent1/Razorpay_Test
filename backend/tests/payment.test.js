@@ -10,6 +10,7 @@ process.env.NODE_ENV = 'test';
 jest.mock('../services/razorpay', () => {
   const original = jest.requireActual('../services/razorpay');
   const mockOrdersCreate = jest.fn();
+  const mockPaymentLinkCreate = jest.fn();
   const mockPaymentsAll = jest.fn();
   const mockPaymentsFetch = jest.fn();
 
@@ -18,6 +19,9 @@ jest.mock('../services/razorpay', () => {
     getRazorpayInstance: jest.fn(() => ({
       orders: {
         create: mockOrdersCreate,
+      },
+      paymentLink: {
+        create: mockPaymentLinkCreate,
       },
       payments: {
         all: mockPaymentsAll,
@@ -34,6 +38,7 @@ jest.mock('../services/razorpay', () => {
       timestamp: new Date().toISOString(),
     })),
     __mockOrdersCreate: mockOrdersCreate,
+    __mockPaymentLinkCreate: mockPaymentLinkCreate,
     __mockPaymentsAll: mockPaymentsAll,
     __mockPaymentsFetch: mockPaymentsFetch,
   };
@@ -280,6 +285,46 @@ describe('Payment API Endpoints', () => {
       expect(res.statusCode).toBe(400);
       expect(res.body).toHaveProperty('success', false);
       expect(res.body.message).toContain('Missing required parameters');
+    });
+  });
+
+  describe('POST /api/payment/create-payment-link', () => {
+    it('should successfully create a payment link and return hosted URL', async () => {
+      razorpayService.__mockPaymentLinkCreate.mockResolvedValueOnce({
+        id: 'plink_test_mock123',
+        short_url: 'https://rzp.io/rzp/testLink',
+        amount: 200000,
+        currency: 'INR',
+      });
+
+      const res = await request(app)
+        .post('/api/payment/create-payment-link')
+        .send({
+          productId: 'token-advance',
+          quantity: 1,
+          customer: {
+            name: 'Aarav Sharma',
+            email: 'aarav@example.com',
+            phone: '9876543210',
+          },
+        });
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body).toHaveProperty('success', true);
+      expect(res.body).toHaveProperty('paymentLinkId', 'plink_test_mock123');
+      expect(res.body).toHaveProperty('paymentLinkUrl', 'https://rzp.io/rzp/testLink');
+      expect(res.body).toHaveProperty('amountInRupees', 2000);
+    });
+
+    it('should return 404 if product does not exist when creating payment link', async () => {
+      const res = await request(app)
+        .post('/api/payment/create-payment-link')
+        .send({
+          productId: 'non-existent-product',
+        });
+
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toHaveProperty('success', false);
     });
   });
 

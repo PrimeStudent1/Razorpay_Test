@@ -326,4 +326,106 @@ router.post('/verify', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/payment/create-payment-link
+ * Creates an official Razorpay Hosted Payment Link for direct new-tab checkout.
+ */
+router.post('/create-payment-link', async (req, res) => {
+  try {
+    const {
+      productId,
+      quantity = 1,
+      customer = {},
+      amount: directAmount,
+      currency = 'INR',
+      notes = {},
+      callbackUrl,
+    } = req.body;
+
+    let finalAmountInRupees;
+    let productName = 'Tejus PG Bed Reservation';
+
+    if (productId) {
+      const product = PRODUCT_CATALOG[productId];
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `Product not found: ${productId}`,
+        });
+      }
+      finalAmountInRupees = product.price * parseInt(quantity, 10);
+      productName = product.name;
+    } else {
+      const parsedAmount = parseFloat(directAmount);
+      if (!parsedAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid amount. Amount must be a positive number greater than 0.',
+        });
+      }
+      finalAmountInRupees = parsedAmount;
+    }
+
+    const amountInPaise = Math.round(finalAmountInRupees * 100);
+    const razorpay = getRazorpayInstance();
+
+    // Clean phone number (Razorpay requires valid contact if provided)
+    let contact;
+    if (customer.phone) {
+      const cleaned = customer.phone.replace(/\D/g, '').slice(-10);
+      if (cleaned.length === 10) {
+        contact = `+91${cleaned}`;
+      }
+    }
+
+    const linkPayload = {
+      amount: amountInPaise,
+      currency: currency.toUpperCase(),
+      accept_partial: false,
+      description: `${productName} Booking`,
+      customer: {
+        name: customer.name || 'Resident',
+        email: customer.email || 'resident@tejuspg.com',
+        ...(contact ? { contact } : {}),
+      },
+      notify: {
+        sms: false,
+        email: false,
+      },
+      reminder_enable: false,
+      notes: {
+        store: 'Tejus PG',
+        productName,
+        productId: productId || 'custom',
+        customerName: customer.name || '',
+        ...notes,
+      },
+    };
+
+    if (callbackUrl) {
+      linkPayload.callback_url = callbackUrl;
+      linkPayload.callback_method = 'get';
+    }
+
+    const paymentLink = await razorpay.paymentLink.create(linkPayload);
+
+    return res.status(201).json({
+      success: true,
+      paymentLinkId: paymentLink.id,
+      paymentLinkUrl: paymentLink.short_url,
+      amount: paymentLink.amount,
+      amountInRupees: finalAmountInRupees,
+      currency: paymentLink.currency,
+      productName,
+    });
+  } catch (error) {
+    console.error('Error creating Razorpay payment link:', error.message || error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.error?.description || error.message || 'Failed to create payment link',
+      code: error.error?.code || 'PAYMENT_LINK_CREATION_FAILED',
+    });
+  }
+});
+
 module.exports = router;

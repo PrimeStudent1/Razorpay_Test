@@ -6,15 +6,20 @@ import FeaturesSection from './components/FeaturesSection';
 import ComparisonSection from './components/ComparisonSection';
 import GallerySection from './components/GallerySection';
 import TrustSection from './components/TrustSection';
+import ContactSection from './components/ContactSection';
+import MobileStickyBar from './components/MobileStickyBar';
 import Footer from './components/Footer';
 import CheckoutModal from './components/CheckoutModal';
 import OrderSuccessModal from './components/OrderSuccessModal';
 import WhatsAppButton from './components/WhatsAppButton';
+import PaymentPage from './components/PaymentPage';
+import RoomAllotmentPage from './components/room-allotment/RoomAllotmentPage';
 import {
   getGatewayConfig,
   createProductOrder,
   verifyPaymentSignature,
 } from './services/paymentApi';
+import { TEJUS_LOGO_DATA_URL } from './services/logoDataUrl';
 
 /**
  * Dynamically loads Razorpay checkout.js script
@@ -34,6 +39,27 @@ const loadRazorpayScript = () => {
 };
 
 export default function App() {
+  // 1. Dedicated route check for Room Allotment Form
+  const isAllotmentRoute =
+    window.location.pathname === '/room-allotment-form' ||
+    window.location.pathname === '/admin/room-allotment-form' ||
+    new URLSearchParams(window.location.search).get('page') === 'room-allotment-form' ||
+    new URLSearchParams(window.location.search).get('tab') === 'allotment';
+
+  if (isAllotmentRoute) {
+    return <RoomAllotmentPage />;
+  }
+
+  // 2. Dedicated route check for Next Tab checkout portal
+  const isCheckoutRoute =
+    window.location.pathname === '/checkout' ||
+    new URLSearchParams(window.location.search).get('page') === 'checkout' ||
+    (new URLSearchParams(window.location.search).has('orderId') && !new URLSearchParams(window.location.search).has('payment_status'));
+
+  if (isCheckoutRoute) {
+    return <PaymentPage />;
+  }
+
   // Room & Booking State
   const [selectedRoom, setSelectedRoom] = useState(ROOMS_DATA[2]); // 2-Share AC default
   const [bookingPlan, setBookingPlan] = useState('token'); // 'token' or 'rent'
@@ -72,6 +98,53 @@ export default function App() {
     loadRazorpayScript();
   }, []);
 
+  // Listen for payment completion from Next Tab via BroadcastChannel, storage event & postMessage
+  useEffect(() => {
+    let bc;
+    try {
+      if (window.BroadcastChannel) {
+        bc = new BroadcastChannel('tejus_pg_payments');
+        bc.onmessage = (event) => {
+          if (event.data && event.data.success) {
+            setIsBookingModalOpen(false);
+            setPaymentResult(event.data);
+          }
+        };
+      }
+    } catch (e) {
+      console.warn('BroadcastChannel sync init:', e);
+    }
+
+    const handleStorage = (e) => {
+      if (e.key === 'tejus_last_payment' && e.newValue) {
+        try {
+          const data = JSON.parse(e.newValue);
+          if (data && data.success) {
+            setIsBookingModalOpen(false);
+            setPaymentResult(data);
+          }
+        } catch (err) {
+          console.warn('Storage sync error:', err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    const handleMessage = (e) => {
+      if (e.data && e.data.type === 'TEJUS_PAYMENT_SUCCESS') {
+        setIsBookingModalOpen(false);
+        setPaymentResult(e.data.data);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
+
   // Smooth scroll helper
   const handleScrollToSection = (id) => {
     const el = document.getElementById(id);
@@ -87,22 +160,16 @@ export default function App() {
     setIsBookingModalOpen(true);
   };
 
-  // Primary Payment Execution Flow via Razorpay
-  const handleProceedToPayment = useCallback(async () => {
+  // Primary Payment Execution Flow via Razorpay (Supports Next Tab and Modal flows)
+  const handleProceedToPayment = useCallback(async (openInNewTab = true, targetTab = null) => {
     setErrorMessage('');
     setIsProcessing(true);
 
     try {
-      // 1. Ensure Razorpay SDK script is ready
-      const isLoaded = await loadRazorpayScript();
-      if (!isLoaded) {
-        throw new Error('Payment gateway SDK failed to load. Please check your connection.');
-      }
-
       // Determine product ID for backend server-side price calculation
       const orderProductId = bookingPlan === 'token' ? selectedRoom.tokenId : selectedRoom.id;
 
-      // 2. Initialize Order on Backend
+      // 1. Initialize Order on Backend
       const orderData = await createProductOrder({
         productId: orderProductId,
         quantity: 1,
@@ -117,14 +184,49 @@ export default function App() {
 
       const planLabel = bookingPlan === 'token' ? 'Bed Reservation Token' : '1st Month Rent';
 
-      // 3. Configure Razorpay Checkout modal with TEJAS PG branding
+      // 2. Next Tab Checkout Flow
+      if (openInNewTab) {
+        // Save order data for next-tab fallback
+        try {
+          sessionStorage.setItem('tejus_pay_orderId', orderData.orderId);
+          sessionStorage.setItem('tejus_pay_keyId', orderData.keyId);
+          sessionStorage.setItem('tejus_pay_amount', String(orderData.amount));
+          sessionStorage.setItem('tejus_pay_amountInRupees', String(orderData.amountInRupees));
+          sessionStorage.setItem('tejus_pay_room', selectedRoom.title);
+          sessionStorage.setItem('tejus_pay_plan', planLabel);
+          sessionStorage.setItem('tejus_pay_name', customer.name);
+          sessionStorage.setItem('tejus_pay_email', customer.email);
+          sessionStorage.setItem('tejus_pay_phone', customer.phone);
+          sessionStorage.setItem('tejus_pay_date', moveInDetails.moveInDate);
+        } catch (storageErr) {
+          console.warn('Session storage warning:', storageErr);
+        }
+
+        const checkoutUrl = `/checkout?orderId=${encodeURIComponent(orderData.orderId)}&keyId=${encodeURIComponent(orderData.keyId)}&amount=${encodeURIComponent(orderData.amount)}&amountInRupees=${encodeURIComponent(orderData.amountInRupees)}&room=${encodeURIComponent(selectedRoom.title)}&plan=${encodeURIComponent(planLabel)}&name=${encodeURIComponent(customer.name)}&email=${encodeURIComponent(customer.email)}&phone=${encodeURIComponent(customer.phone)}&date=${encodeURIComponent(moveInDetails.moveInDate)}`;
+
+        if (targetTab && !targetTab.closed) {
+          targetTab.location.href = checkoutUrl;
+        } else {
+          window.open(checkoutUrl, '_blank');
+        }
+
+        setIsProcessing(false);
+        return;
+      }
+
+      // 3. Fallback: In-page Razorpay Checkout modal
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        throw new Error('Payment gateway SDK failed to load. Please check your connection.');
+      }
+
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: 'TEJUS PG',
+        name: 'TEJUS BOYS PG',
         description: `${selectedRoom.title} (${planLabel})`,
-        image: `${window.location.origin}/tejus-logo.png`,
+        image: TEJUS_LOGO_DATA_URL,
         order_id: orderData.orderId,
         prefill: {
           name: customer.name,
@@ -132,10 +234,9 @@ export default function App() {
           contact: customer.phone,
         },
         theme: {
-          color: '#18181b', // Clean luxury dark brand color matching theme
+          color: '#18181b',
         },
         handler: async function (response) {
-          // 4. Verify signature on backend
           try {
             const verifyRes = await verifyPaymentSignature({
               razorpay_order_id: response.razorpay_order_id,
@@ -176,7 +277,6 @@ export default function App() {
         },
       };
 
-      // 5. Open Razorpay Checkout modal
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (resp) {
         setPaymentResult({
@@ -189,10 +289,14 @@ export default function App() {
 
       rzp.open();
     } catch (err) {
+      if (targetTab && !targetTab.closed) {
+        targetTab.close();
+      }
       setErrorMessage(err.message || 'An error occurred during booking initialization');
       setIsProcessing(false);
     }
   }, [selectedRoom, bookingPlan, customer, moveInDetails]);
+
 
   return (
     <div className="tejas-site-wrapper">
@@ -225,14 +329,23 @@ export default function App() {
       {/* Location Proximity & FAQ */}
       <TrustSection />
 
+      {/* Interactive Visit Schedule & Direct Contact */}
+      <ContactSection onOpenBooking={() => setIsBookingModalOpen(true)} />
+
       {/* Footer */}
       <Footer
         onScrollToSection={handleScrollToSection}
         onOpenBooking={() => setIsBookingModalOpen(true)}
       />
 
-      {/* Floating WhatsApp Button (Screenshot 4) */}
+      {/* Floating WhatsApp Button */}
       <WhatsAppButton />
+
+      {/* Mobile Sticky Action Bar */}
+      <MobileStickyBar
+        onOpenBooking={() => setIsBookingModalOpen(true)}
+        isModalOpen={isBookingModalOpen || Boolean(paymentResult)}
+      />
 
       {/* Room Reservation Checkout Modal */}
       <CheckoutModal
