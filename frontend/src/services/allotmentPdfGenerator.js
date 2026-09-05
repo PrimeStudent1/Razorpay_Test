@@ -96,7 +96,7 @@ export async function generateRoomAllotmentPdf(formData) {
         logoImage = await pdfDoc.embedPng(logoBytes);
       }
     }
-  } catch (e) {
+  } catch {
     // Non-fatal in headless/test environments
   }
 
@@ -729,7 +729,7 @@ export async function generateRoomAllotmentPdf(formData) {
   const clearCol2 = 60;  // Good/clean
   const clearCol3 = 70;  // Damaged/missing
   const clearCol4 = 95;  // Deduction amount
-  const clearCol5 = 114; // Remarks
+  const _clearCol5 = 114; // Remarks
 
   // Table header
   page2.drawRectangle({

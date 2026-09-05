@@ -60,27 +60,11 @@ export default function App() {
     new URLSearchParams(window.location.search).get('page') === 'room-allotment-form' ||
     new URLSearchParams(window.location.search).get('tab') === 'allotment';
 
-  if (isAllotmentRoute) {
-    return (
-      <Suspense fallback={<RouteLoadingFallback message="Loading Room Allotment Portal..." />}>
-        <RoomAllotmentPage />
-      </Suspense>
-    );
-  }
-
   // 2. Dedicated route check for Next Tab checkout portal
   const isCheckoutRoute =
     window.location.pathname === '/checkout' ||
     new URLSearchParams(window.location.search).get('page') === 'checkout' ||
     (new URLSearchParams(window.location.search).has('orderId') && !new URLSearchParams(window.location.search).has('payment_status'));
-
-  if (isCheckoutRoute) {
-    return (
-      <Suspense fallback={<RouteLoadingFallback message="Connecting to Secure Checkout..." />}>
-        <PaymentPage />
-      </Suspense>
-    );
-  }
 
   // Room & Booking State
   const [selectedRoom, setSelectedRoom] = useState(ROOMS_DATA[2]); // 2-Share AC default
@@ -101,7 +85,7 @@ export default function App() {
   });
 
   // Gateway Config & Processing State
-  const [config, setConfig] = useState({
+  const [_config, setConfig] = useState({
     keyId: '',
     maskedKeyId: '',
     isConfigured: false,
@@ -319,6 +303,21 @@ export default function App() {
     }
   }, [selectedRoom, bookingPlan, customer, moveInDetails]);
 
+  if (isAllotmentRoute) {
+    return (
+      <Suspense fallback={<RouteLoadingFallback message="Loading Room Allotment Portal..." />}>
+        <RoomAllotmentPage />
+      </Suspense>
+    );
+  }
+
+  if (isCheckoutRoute) {
+    return (
+      <Suspense fallback={<RouteLoadingFallback message="Connecting to Secure Checkout..." />}>
+        <PaymentPage />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="tejas-site-wrapper">

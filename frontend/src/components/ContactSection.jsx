@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function ContactSection({ onOpenBooking }) {
+export default function ContactSection({ onOpenBooking: _onOpenBooking }) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',

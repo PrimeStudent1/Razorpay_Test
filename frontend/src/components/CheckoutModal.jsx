@@ -59,7 +59,7 @@ export default function CheckoutModal({
               </div>
             `;
           }
-        } catch (tabErr) {
+        } catch {
           // jsdom or blocked environment
         }
       }

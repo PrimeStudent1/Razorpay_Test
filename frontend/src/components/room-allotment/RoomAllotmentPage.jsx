@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import FormHeader from './FormHeader';
 import ProgressIndicator from './ProgressIndicator';
 import PersonalDetailsSection from './PersonalDetailsSection';

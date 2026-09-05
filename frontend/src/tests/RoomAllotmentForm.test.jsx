@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import RoomAllotmentPage from '../components/room-allotment/RoomAllotmentPage';
 import { INVENTORY_ITEMS, PG_RULES_CATEGORIES, getSampleFormData } from '../services/allotmentFormDefaults';
 import { generateRoomAllotmentPdf, getPdfFileName } from '../services/allotmentPdfGenerator';
